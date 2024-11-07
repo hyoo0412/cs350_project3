@@ -1,0 +1,8 @@
+Hoyeon Yoo: (3.2) Command pipeline
+
+Rahat Rahman: (3.5) History
+
+Mandy Guo: (3.3) Input and output redirection
+
+Jack Hannagan: (3.1) Multiple commands in the same line
+               (3.4) Command background execution
