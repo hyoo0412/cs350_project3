@@ -24,12 +24,12 @@ struct execcmd {
 };
 
 struct redircmd {
-  int type;
-  struct cmd *cmd;
-  char *file;
-  char *efile;
-  int mode;
-  int fd;
+  int type;	
+  struct cmd *cmd;	//takes the command that is passed as an argument
+  char *file;		//stores the file passed
+  char *efile;		
+  int mode;		//in fcntl.h file
+  int fd;		//file descriptor: 0 for stdin, 1 for stdout
 };
 
 struct pipecmd {
@@ -62,7 +62,7 @@ runcmd(struct cmd *cmd)
   struct execcmd *ecmd;
   //struct listcmd *lcmd;
   //struct pipecmd *pcmd;
-  //struct redircmd *rcmd;
+  struct redircmd *rcmd;
   
   if(cmd == 0)
     exit();
@@ -80,7 +80,15 @@ runcmd(struct cmd *cmd)
     break;
 
   case REDIR:
-    printf(2, "Redirection Not Implemented\n");
+    rcmd = (struct redircmd*)cmd;  
+    int fd = open(rcmd->file, rcmd->mode);
+    
+    close(rcmd->fd);
+    dup(fd);
+    close(fd);
+    
+    runcmd(rcmd->cmd);
+    
     break;
 
   case LIST:
