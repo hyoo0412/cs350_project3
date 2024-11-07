@@ -57,11 +57,12 @@ struct cmd *parsecmd(char*);
 void
 runcmd(struct cmd *cmd)
 {
-  //int p[2];
+  int p[2];
   //struct backcmd *bcmd;
   struct execcmd *ecmd;
   //struct listcmd *lcmd;
   //struct pipecmd *pcmd;
+  struct pipecmd *pcmd;
   struct redircmd *rcmd;
   
   if(cmd == 0)
@@ -96,7 +97,31 @@ runcmd(struct cmd *cmd)
     break;
 
   case PIPE:
-    printf(2, "Pipe Not implemented\n");
+    pcmd = (struct pipecmd*)cmd;
+
+    pipe(p);
+
+    if(fork1() == 0) {
+      close(1);
+      dup(p[1]);
+      close(p[0]);
+      close(p[1]);
+      runcmd(pcmd->left);
+    }
+
+    if(fork1() == 0) {
+      close(0);
+      dup(p[0]);
+      close(p[0]);
+      close(p[1]);
+      runcmd(pcmd->right);
+    }
+
+    close(p[0]);
+    close(p[1]);
+
+    wait();
+    wait();
     break;
 
   case BACK:
