@@ -88,21 +88,7 @@ runcmd(struct cmd *cmd)
     break;
 
   case PIPE:
-    //printf(2, "Pipe Not Implemented\n");
-    //pcmd = (struct pipecmd*)cmd;
-    // if(pcmd->left == 0) {
-    //   exit();
-    // }
-    // if(pcmd->right == 0) {
-    //   exit();
-    // }
-
-    // exec(pcmd->left, pcmd->right);
-    // printf(2, "pipe %s failed\n", pcmd->left);
-    // break;
     pcmd = (struct pipecmd*)cmd;
-
-    if(pcmd->left == 0 || pcmd->right == 0) exit();
 
     pipe(p);
 
