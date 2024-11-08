@@ -11,7 +11,11 @@
 #define LIST  4
 #define BACK  5
 
-#define MAXARGS 10
+#define MAXHIST 10 // hist stores max 10 commands
+
+#define MAXARGS 10 
+
+char **history[MAXHIST];
 
 struct cmd {
   int type;
@@ -52,6 +56,7 @@ struct backcmd {
 int fork1(void);  // Fork but panics on failure.
 void panic(char*);
 struct cmd *parsecmd(char*);
+char* hist(char *param, int status);
 
 // Execute cmd.  Never returns.
 void
@@ -94,6 +99,7 @@ runcmd(struct cmd *cmd)
   case BACK:
     printf(2, "Backgrounding not implemented\n");
     break;
+
   }
   exit();
 }
@@ -125,6 +131,29 @@ main(void)
 
   // Read and run input commands.
   while(getcmd(buf, sizeof(buf)) >= 0){
+
+    // parse for hist
+    if(buf[0] == 'h' && buf[1] == 'i' && buf[2] == 's' && buf[3] == 't' && buf[4] == ' '){
+      if(buf[5] == 'p' && buf[6] == 'r' && buf[7] == 'i' && buf[8] == 'n' && buf[9] == 't'){
+        char* temp = hist(buf, 1);                          // print history (prints thru the function)
+      } 
+      else if((atoi(buf+5) < 11) && (atoi(buf+5) > 0)){
+        buf[0] = hist(buf+5, 0);                            // run cmd w/ param @ buf+5 (should just be an int)
+      } 
+      else{
+        printf(2, "cannot hist %s\n", buf+5);
+      }
+      continue;
+    } 
+    else{
+      printf(2, "hielllo\n");
+      // adding command to history
+      for(int i = MAXHIST; i > 0; i--){                     // shift command list down
+        history[i] = history[i-1]; 
+      }
+      history[0] = buf;
+    }
+    
     if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){
       // Chdir must be called by the parent, not the child.
       buf[strlen(buf)-1] = 0;  // chop \n
@@ -132,11 +161,30 @@ main(void)
         printf(2, "cannot cd %s\n", buf+3);
       continue;
     }
+
     if(fork1() == 0)
       runcmd(parsecmd(buf));
     wait();
   }
   exit();
+}
+
+// Determine what hist should do
+// status == 1 --> print last 10 commands
+// status == 0 --> run command 
+char* hist(char *param, int status){
+  if(status == 1){
+    for(int i = 0; i < MAXHIST; i++){
+      if(history[i] != '\0'){                             // since history[] inializes everything to NULL @ beginning
+        printf(2, "Previous command %d: %s", i+1, history[i]);
+      }
+    }
+    return "worked\n";                                    // not important return ( i think )
+  } else if(status == 0){
+    return history[atoi(param)-1];                        // return the whole command
+  } else{
+    return "nothing\n";                                   // not important return ( i think )
+  }
 }
 
 void
@@ -456,6 +504,6 @@ nulterminate(struct cmd *cmd)
     bcmd = (struct backcmd*)cmd;
     nulterminate(bcmd->cmd);
     break;
-  }
+  } 
   return cmd;
 }
