@@ -84,12 +84,16 @@ runcmd(struct cmd *cmd)
     rcmd = (struct redircmd*)cmd;	//cast cmd to redircmd for the redir case
     
     char *rfile = rcmd->file;  		//create a local variable rfile to store the rcmd file
-    int rmode = rcmd->mode;		//store the read-write mode into a local mode variable
-    int rfd = open(rfile, rmode);	//store the file descriptor from opening the file with rfile and rmode as arguments
+    int rmode = rcmd->mode;		//store the read-write mode into a local var (fcntl.h)
+    					    //O_CREATE - creates file if doesn't exist 
+    					    //O_RDONLY - read only
+    					    //O_WRONLY - write only
+    					    //O_RDWR - read and write
+    int rfd = open(rfile, rmode);	//open the output file using rfile and rmode as arguments
     
-    close(rcmd->fd);			//close the file descriptor rcmd->fd so that it isn't used
-    dup(rfd);				//dup file descriptor
-    close(rfd);				//close rfd now that it's been duplicated to r
+    close(rcmd->fd);			//close the file descriptor rcmd->fd
+    dup(rfd);				//dup file descriptor - makes copy of rfd (dup2 not defined)
+    close(rfd);				//close rfd now that it's been duplicated
     
     runcmd(rcmd->cmd);			//run command using the redirected file descriptor
     

@@ -282,24 +282,24 @@ fork1(void)
     break;
      25d:	83 c4 10             	add    $0x10,%esp
      260:	eb be                	jmp    220 <runcmd+0x70>
-    int rfd = open(rfile, rmode);	
+    int rfd = open(rfile, rmode);	//open the output file using rfile and rmode as arguments
      262:	56                   	push   %esi
      263:	56                   	push   %esi
      264:	ff 73 10             	push   0x10(%ebx)
      267:	ff 73 08             	push   0x8(%ebx)
      26a:	e8 c4 0b 00 00       	call   e33 <open>
      26f:	89 c6                	mov    %eax,%esi
-    close(rcmd->fd);
+    close(rcmd->fd);			//close the file descriptor rcmd->fd
      271:	58                   	pop    %eax
      272:	ff 73 14             	push   0x14(%ebx)
      275:	e8 a1 0b 00 00       	call   e1b <close>
-    dup(rfd);
+    dup(rfd);				//dup file descriptor - makes copy of rfd (dup2 not defined)
      27a:	89 34 24             	mov    %esi,(%esp)
      27d:	e8 e9 0b 00 00       	call   e6b <dup>
-    close(rfd);
+    close(rfd);				//close rfd now that it's been duplicated
      282:	89 34 24             	mov    %esi,(%esp)
      285:	e8 91 0b 00 00       	call   e1b <close>
-    runcmd(rcmd->cmd);
+    runcmd(rcmd->cmd);			//run command using the redirected file descriptor
      28a:	58                   	pop    %eax
      28b:	ff 73 04             	push   0x4(%ebx)
      28e:	e8 1d ff ff ff       	call   1b0 <runcmd>
