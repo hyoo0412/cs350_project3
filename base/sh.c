@@ -81,12 +81,15 @@ runcmd(struct cmd *cmd)
     break;
 
   case REDIR:
-    rcmd = (struct redircmd*)cmd;  
-    int fd = open(rcmd->file, rcmd->mode);
+    rcmd = (struct redircmd*)cmd;
+    
+    char *rfile = rcmd->file;  		//
+    int rmode = rcmd->mode;		
+    int rfd = open(rfile, rmode);	
     
     close(rcmd->fd);
-    dup(fd);
-    close(fd);
+    dup(rfd);
+    close(rfd);
     
     runcmd(rcmd->cmd);
     
