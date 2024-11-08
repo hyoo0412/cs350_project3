@@ -28,12 +28,12 @@ struct execcmd {
 };
 
 struct redircmd {
-  int type;
-  struct cmd *cmd;
-  char *file;
-  char *efile;
-  int mode;
-  int fd;
+  int type;	
+  struct cmd *cmd;	//takes the command that is passed as an argument
+  char *file;		//stores the file passed
+  char *efile;		
+  int mode;		//in fcntl.h file
+  int fd;		//file descriptor: 0 for stdin, 1 for stdout
 };
 
 struct pipecmd {
@@ -62,12 +62,13 @@ char* hist(char *param, int status);
 void
 runcmd(struct cmd *cmd)
 {
-  //int p[2];
+  int p[2];
   //struct backcmd *bcmd;
   struct execcmd *ecmd;
   //struct listcmd *lcmd;
   //struct pipecmd *pcmd;
-  //struct redircmd *rcmd;
+  struct pipecmd *pcmd;
+  struct redircmd *rcmd;
   
   if(cmd == 0)
     exit();
@@ -85,7 +86,22 @@ runcmd(struct cmd *cmd)
     break;
 
   case REDIR:
-    printf(2, "Redirection Not Implemented\n");
+    rcmd = (struct redircmd*)cmd;	//cast cmd to redircmd for the redir case
+    
+    char *rfile = rcmd->file;  		//create a local variable rfile to store the rcmd file
+    int rmode = rcmd->mode;		//store the read-write mode into a local var (fcntl.h)
+    					    //O_CREATE - creates file if doesn't exist 
+    					    //O_RDONLY - read only
+    					    //O_WRONLY - write only
+    					    //O_RDWR - read and write
+    int rfd = open(rfile, rmode);	//open the output file using rfile and rmode as arguments
+    
+    close(rcmd->fd);			//close the file descriptor rcmd->fd
+    dup(rfd);				//dup file descriptor - makes copy of rfd (dup2 not defined)
+    close(rfd);				//close rfd now that it's been duplicated
+    
+    runcmd(rcmd->cmd);			//run command using the redirected file descriptor
+    
     break;
 
   case LIST:
@@ -93,7 +109,31 @@ runcmd(struct cmd *cmd)
     break;
 
   case PIPE:
-    printf(2, "Pipe Not implemented\n");
+    pcmd = (struct pipecmd*)cmd;
+
+    pipe(p);
+
+    if(fork1() == 0) {
+      close(1);
+      dup(p[1]);
+      close(p[0]);
+      close(p[1]);
+      runcmd(pcmd->left);
+    }
+
+    if(fork1() == 0) {
+      close(0);
+      dup(p[0]);
+      close(p[0]);
+      close(p[1]);
+      runcmd(pcmd->right);
+    }
+
+    close(p[0]);
+    close(p[1]);
+
+    wait();
+    wait();
     break;
 
   case BACK:
