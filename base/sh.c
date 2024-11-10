@@ -102,19 +102,18 @@ runcmd(struct cmd *cmd)
     break;
 
   case LIST: //HEY GUYS IM 90% THIS WORKS, IF THIS IS WRONG< MAYBE SWAP THE wait() with runcmd 115-116, but this is the easy part
-  lcmd = (struct listcmd*) cmd;
+    lcmd = (struct listcmd*) cmd;
 
-  int pid;
-  pid = fork1();
+    int pid1 = fork1();
 
-  if (pid ==0){
-    //child
-    runcmd(lcmd->left);
-  }
-  else{
-    wait();
-    runcmd(lcmd->right);
-  }
+    if (pid1 ==0){
+      //child
+      runcmd(lcmd->left);
+    }
+    else{
+      wait();
+      runcmd(lcmd->right);
+    }
    
     break;
 
@@ -150,21 +149,17 @@ runcmd(struct cmd *cmd)
 
     bcmd = (struct backcmd*) cmd;
 
-    int pid;
-    pid = fork1();
+    int pid2 = fork1();
 
-    if (pid == 0){
+    if (pid2 == 0){
       //child means BACKGROUND PROCESS i know this much! this is the __proccess__ before the &
       runcmd(bcmd->cmd); //pretty sure this is right
 
     }
-    else{
       //parent means figure out how to use my very own waitpid(no args) once and clean up 
-      int neverUsedAgain = waitpid(); //dont need to store, just for gathering, actual stuff happens in kernel space
-
+      //int neverUsedAgain = waitpid(); //dont need to store, just for gathering, actual stuff happens in kernel space
+      
       //i dont think the parent should do anything else??? im gonna keep looping the waitpid() above in the main() function here
-
-    }
     
     break;
 

@@ -279,11 +279,11 @@ exit(void)
 
 
 int waitpid(void){ //HEADS UP i think this is the main thing wrong with lots of stuff in this program
-  struct proc *p, *myProccess;
+  struct proc *p, *myProcess;
   int havethThouOffspring, kidPid;
 
   havethThouOffspring = 0; //sorry you solo for now
-  myProccess = myProc(); //idk what this really does, but pretty sure it's right
+  myProcess = myproc(); //idk what this really does, but pretty sure it's right
 
 
   acquire(&ptable.lock);
@@ -291,22 +291,10 @@ int waitpid(void){ //HEADS UP i think this is the main thing wrong with lots of 
   //NO OUTER WHILE LOOP HERE just inner table loop - the only thing im sure of here...
 
   for (p = ptable.proc;  p< &ptable.proc[NPROC]; p++){
-    //somehow, i need to only check for zombie processes of the CURRENT proccess running in background, but the parent dies
-    //so the grandchild background process is orhpaned? right?
-    //then i should need to know how to parse the table, see if it's parent is the currProc, and then see if zombie?
-    
-    //these are my thoughts.. feel free to take them with a grain of salt if you wish...
-
-//see IDK if i need this if statement to see if its a child of the existing process or if this is unrelated
-/*
-    if(p->parent != myProccess){
-      continue;
-    }
-*/
 
     if (p->state == ZOMBIE){
       //if proc is zombie, otherwise dont care
-      if (p->parent == 0 /*parent dead*/ || p->parent->state == UNUSED /*idk if this middle one needed */ || p->parent->state == ZOMBIE /*maybe if multiple background proccesses?*/){
+      if (p->parent == myProcess){
         //if proc is orphaned, we know this is a background process!
         //(at least i think so ....)
 

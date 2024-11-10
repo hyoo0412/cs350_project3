@@ -6,3 +6,6 @@ Mandy Guo: (3.3) Input and output redirection
 
 Jack Hannagan: (3.1) Multiple commands in the same line
                (3.4) Command background execution
+
+(3.4) Bonus:
+We commented out the zombie code & 'ps' doesnt show the zombie
