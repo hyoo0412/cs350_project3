@@ -11,11 +11,9 @@
 #define LIST  4
 #define BACK  5
 
-#define MAXHIST 10 // hist stores max 10 commands
+#define MAXHIST 10          // hist stores max 10 commands
 
 #define MAXARGS 10 
-
-char **history[MAXHIST];
 
 struct cmd {
   int type;
@@ -56,7 +54,7 @@ struct backcmd {
 int fork1(void);  // Fork but panics on failure.
 void panic(char*);
 struct cmd *parsecmd(char*);
-char* hist(char *param, int status);
+char* hist(char *param, int status, char *history[]);
 
 // Execute cmd.  Never returns.
 void
@@ -160,6 +158,7 @@ main(void)
 {
   static char buf[100];
   int fd;
+  char *history[MAXHIST];
 
   // Ensure that three file descriptors are open.
   while((fd = open("console", O_RDWR)) >= 0){
@@ -171,27 +170,34 @@ main(void)
 
   // Read and run input commands.
   while(getcmd(buf, sizeof(buf)) >= 0){
-
     // parse for hist
     if(buf[0] == 'h' && buf[1] == 'i' && buf[2] == 's' && buf[3] == 't' && buf[4] == ' '){
       if(buf[5] == 'p' && buf[6] == 'r' && buf[7] == 'i' && buf[8] == 'n' && buf[9] == 't'){
-        char* temp = hist(buf, 1);                          // print history (prints thru the function)
+        hist(buf, 1, &history);                        // print history (prints thru the function)
       } 
       else if((atoi(buf+5) < 11) && (atoi(buf+5) > 0)){
-        buf[0] = hist(buf+5, 0);                            // run cmd w/ param @ buf+5 (should just be an int)
+        strcpy(buf, hist(buf+5, 0, &history));         // run cmd w/ param @ buf+5 (should just be an int)
+
+        if(fork1() == 0)                               // run the command here since otherwise it'd get skipped b/c of 'continue' & 
+          runcmd(parsecmd(buf));                       // this prevents the command from getting re added into history
+        wait();
       } 
       else{
         printf(2, "cannot hist %s\n", buf+5);
       }
       continue;
     } 
+    // adding command to history
+    if(history[0] == '\0'){
+      history[0] = malloc(strlen(buf)+1);              // have to malloc so strcpy doesnt dereference a null ( the +1 is to account for the null terminator)
+      strcpy(history[0], buf);
+    } 
     else{
-      printf(2, "hielllo\n");
-      // adding command to history
-      for(int i = MAXHIST; i > 0; i--){                     // shift command list down
-        history[i] = history[i-1]; 
+      for(int i = MAXHIST; i > 0; i--){                // shift command list down
+        history[i] = history[(i-1)]; 
       }
-      history[0] = buf;
+      history[0] = malloc(strlen(buf)+1);
+      strcpy(history[0], buf);
     }
     
     if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){
@@ -206,24 +212,33 @@ main(void)
       runcmd(parsecmd(buf));
     wait();
   }
+
+  for(int i = 0; i < MAXHIST; i++){                    // freeing memory to get rid of leaks
+    if(history[i] != '\0'){
+        free(history[i]);
+    }
+  }
+
   exit();
 }
 
 // Determine what hist should do
 // status == 1 --> print last 10 commands
 // status == 0 --> run command 
-char* hist(char *param, int status){
+char* hist(char *param, int status, char *history[]){
   if(status == 1){
     for(int i = 0; i < MAXHIST; i++){
-      if(history[i] != '\0'){                             // since history[] inializes everything to NULL @ beginning
+      if(history[i] != '\0'){                          // since history[] inializes everything to NULL @ beginning (we don't want to see the empty history slots)
         printf(2, "Previous command %d: %s", i+1, history[i]);
       }
     }
-    return "worked\n";                                    // not important return ( i think )
-  } else if(status == 0){
-    return history[atoi(param)-1];                        // return the whole command
-  } else{
-    return "nothing\n";                                   // not important return ( i think )
+    return "worked\n";                                 // not important return
+  } 
+  else if(status == 0){
+    return history[atoi(param)-1];                     // returns command at (param - 1) in history
+  } 
+  else{
+    return "nothing\n";                                // not important return
   }
 }
 
