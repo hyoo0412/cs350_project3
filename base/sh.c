@@ -61,10 +61,9 @@ void
 runcmd(struct cmd *cmd)
 {
   int p[2];
-  //struct backcmd *bcmd;
+  struct backcmd *bcmd;
   struct execcmd *ecmd;
-  //struct listcmd *lcmd;
-  //struct pipecmd *pcmd;
+  struct listcmd *lcmd;
   struct pipecmd *pcmd;
   struct redircmd *rcmd;
   
@@ -102,8 +101,21 @@ runcmd(struct cmd *cmd)
     
     break;
 
-  case LIST:
-    printf(2, "List Not Implemented\n");
+  case LIST: //HEY GUYS IM 90% THIS WORKS, IF THIS IS WRONG< MAYBE SWAP THE wait() with runcmd 115-116, but this is the easy part
+  lcmd = (struct listcmd*) cmd;
+
+  int pid;
+  pid = fork1();
+
+  if (pid ==0){
+    //child
+    runcmd(lcmd->left);
+  }
+  else{
+    wait();
+    runcmd(lcmd->right);
+  }
+   
     break;
 
   case PIPE:
@@ -134,8 +146,26 @@ runcmd(struct cmd *cmd)
     wait();
     break;
 
-  case BACK:
-    printf(2, "Backgrounding not implemented\n");
+  case BACK: //oh boy so i dont really know if this is going to work at all...
+
+    bcmd = (struct backcmd*) cmd;
+
+    int pid;
+    pid = fork1();
+
+    if (pid == 0){
+      //child means BACKGROUND PROCESS i know this much! this is the __proccess__ before the &
+      runcmd(bcmd->cmd); //pretty sure this is right
+
+    }
+    else{
+      //parent means figure out how to use my very own waitpid(no args) once and clean up 
+      int neverUsedAgain = waitpid(); //dont need to store, just for gathering, actual stuff happens in kernel space
+
+      //i dont think the parent should do anything else??? im gonna keep looping the waitpid() above in the main() function here
+
+    }
+    
     break;
 
   }
@@ -170,6 +200,14 @@ main(void)
 
   // Read and run input commands.
   while(getcmd(buf, sizeof(buf)) >= 0){
+
+    //BACKGROUNDING PROCESS.... currently, shell is parent, runcmd("_command_ &") is child, background process is grandchild... see if any zombies of runcmd("command" &) exist? maybe 
+    int neverUsed = waitpid(); //this will just keep checking to see if the child of something
+
+    //see guys this is my real problem here because i dont understand how to check the status of a grandchild of a process we don't even know about.
+    //Since i'm calling this from main(), we have no idea about the child in question, much less the grandchild zombie process...
+    //if you have any ideas, i would be happy to hear them!
+
     // parse for hist
     if(buf[0] == 'h' && buf[1] == 'i' && buf[2] == 's' && buf[3] == 't' && buf[4] == ' '){
       if(buf[5] == 'p' && buf[6] == 'r' && buf[7] == 'i' && buf[8] == 'n' && buf[9] == 't'){
@@ -187,6 +225,7 @@ main(void)
       }
       continue;
     } 
+
     // adding command to history
     if(history[0] == '\0'){
       history[0] = malloc(strlen(buf)+1);              // have to malloc so strcpy doesnt dereference a null ( the +1 is to account for the null terminator)

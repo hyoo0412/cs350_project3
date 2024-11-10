@@ -7,6 +7,12 @@
 #include "mmu.h"
 #include "proc.h"
 
+//my sys call just goes into proc for the table loop
+int
+sys_waitpid(void){
+  return waitpid(); //goes to proc.c
+}
+
 int
 sys_fork(void)
 {
